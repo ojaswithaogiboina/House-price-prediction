@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>House Price Prediction</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(
+                135deg,
+                #141e30,
+                #243b55
+            );
+
+            min-height: 100vh;
+
+            padding: 40px 20px;
+        }
+
+        .container {
+
+            max-width: 1000px;
+
+            margin: auto;
+
+            background: white;
+
+            padding: 35px;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 20px 50px
+                rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+
+            text-align: center;
+
+            color: #172b4d;
+
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+
+            text-align: center;
+
+            color: #666;
+
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap: 18px;
+        }
+
+        .form-group {
+
+            display: flex;
+
+            flex-direction: column;
+        }
+
+        label {
+
+            font-weight: bold;
+
+            margin-bottom: 7px;
+
+            color: #333;
+        }
+
+        input,
+        select {
+
+            padding: 12px;
+
+            border:
+                1px solid #ccc;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+        }
+
+        input:focus,
+        select:focus {
+
+            outline: none;
+
+            border-color: #2674e8;
+        }
+
+        button {
+
+            width: 100%;
+
+            margin-top: 25px;
+
+            padding: 15px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: #2674e8;
+
+            color: white;
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+
+            background: #1557b0;
+        }
+
+        #result {
+
+            display: none;
+
+            margin-top: 30px;
+
+            padding: 25px;
+
+            text-align: center;
+
+            background: #e8f5e9;
+
+            border-radius: 12px;
+        }
+
+        #result h2 {
+
+            color: #2e7d32;
+        }
+
+        #price {
+
+            font-size: 35px;
+
+            font-weight: bold;
+
+            color: #1b5e20;
+        }
+
+        #error {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 15px;
+
+            text-align: center;
+
+            background: #ffebee;
+
+            color: #c62828;
+
+            border-radius: 8px;
+        }
+
+        @media(max-width: 700px) {
+
+            .form-grid {
+
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <h1>
+        🏠 House Price Prediction
+    </h1>
+
+
+    <p class="subtitle">
+
+        Enter house details to predict
+        the estimated price
+
+    </p>
+
+
+    <form id="predictionForm">
+
+
+        <div class="form-grid">
+
+
+            <!-- DATE -->
+
+            <div class="form-group">
+
+                <label>Date</label>
+
+                <input
+                    type="date"
+                    id="date"
+                    required>
+
+            </div>
+
+
+            <!-- BEDROOMS -->
+
+            <div class="form-group">
+
+                <label>Bedrooms</label>
+
+                <input
+                    type="number"
+                    id="bedrooms"
+                    required>
+
+            </div>
+
+
+            <!-- BATHROOMS -->
+
+            <div class="form-group">
+
+                <label>Bathrooms</label>
+
+                <input
+                    type="number"
+                    step="0.25"
+                    id="bathrooms"
+                    required>
+
+            </div>
+
+
+            <!-- LIVING AREA -->
+
+            <div class="form-group">
+
+                <label>
+                    Living Area (sqft)
+                </label>
+
+                <input
+                    type="number"
+                    id="sqft_living"
+                    required>
+
+            </div>
+
+
+            <!-- LOT AREA -->
+
+            <div class="form-group">
+
+                <label>
+                    Lot Area (sqft)
+                </label>
+
+                <input
+                    type="number"
+                    id="sqft_lot"
+                    required>
+
+            </div>
+
+
+            <!-- FLOORS -->
+
+            <div class="form-group">
+
+                <label>Floors</label>
+
+                <input
+                    type="number"
+                    step="0.5"
+                    id="floors"
+                    required>
+
+            </div>
+
+
+            <!-- WATERFRONT -->
+
+            <div class="form-group">
+
+                <label>Waterfront</label>
+
+                <select id="waterfront">
+
+                    <option value="0">
+                        No
+                    </option>
+
+                    <option value="1">
+                        Yes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- VIEW -->
+
+            <div class="form-group">
+
+                <label>View</label>
+
+                <input
+                    type="number"
+                    min="0"
+                    max="4"
+                    id="view"
+                    required>
+
+            </div>
+
+
+            <!-- CONDITION -->
+
+            <div class="form-group">
+
+                <label>Condition</label>
+
+                <input
+                    type="number"
+                    min="1"
+                    max="5"
+                    id="condition"
+                    required>
+
+            </div>
+
+
+            <!-- ABOVE AREA -->
+
+            <div class="form-group">
+
+                <label>
+                    Above Ground Area
+                </label>
+
+                <input
+                    type="number"
+                    id="sqft_above"
+                    required>
+
+            </div>
+
+
+            <!-- BASEMENT -->
+
+            <div class="form-group">
+
+                <label>
+                    Basement Area
+                </label>
+
+                <input
+                    type="number"
+                    id="sqft_basement"
+                    required>
+
+            </div>
+
+
+            <!-- YEAR BUILT -->
+
+            <div class="form-group">
+
+                <label>Year Built</label>
+
+                <input
+                    type="number"
+                    id="yr_built"
+                    required>
+
+            </div>
+
+
+            <!-- YEAR RENOVATED -->
+
+            <div class="form-group">
+
+                <label>
+                    Year Renovated
+                </label>
+
+                <input
+                    type="number"
+                    id="yr_renovated"
+                    value="0"
+                    required>
+
+            </div>
+
+
+            <!-- CITY -->
+
+            <div class="form-group">
+
+                <label>City</label>
+
+                <input
+                    type="text"
+                    id="city"
+                    placeholder="Example: Seattle"
+                    required>
+
+            </div>
+
+
+            <!-- COUNTRY -->
+
+            <div class="form-group">
+
+                <label>Country</label>
+
+                <input
+                    type="text"
+                    id="country"
+                    value="USA"
+                    required>
+
+            </div>
+
+
+        </div>
+
+
+        <button type="submit">
+
+            Predict House Price
+
+        </button>
+
+
+    </form>
+
+
+    <!-- RESULT -->
+
+    <div id="result">
+
+        <h2>
+            Predicted House Price
+        </h2>
+
+        <div id="price"></div>
+
+    </div>
+
+
+    <!-- ERROR -->
+
+    <div id="error"></div>
+
+
+</div>
+
+
+<script>
+
+
+document
+.getElementById("predictionForm")
+.addEventListener(
+    "submit",
+    async function(event) {
+
+
+        event.preventDefault();
+
+
+        const resultBox =
+            document.getElementById(
+                "result"
+            );
+
+
+        const errorBox =
+            document.getElementById(
+                "error"
+            );
+
+
+        const priceBox =
+            document.getElementById(
+                "price"
+            );
+
+
+        resultBox.style.display =
+            "none";
+
+
+        errorBox.style.display =
+            "none";
+
+
+        // Collect user input
+
+        const data = {
+
+            date:
+                document.getElementById(
+                    "date"
+                ).value,
+
+            bedrooms:
+                Number(
+                    document.getElementById(
+                        "bedrooms"
+                    ).value
+                ),
+
+            bathrooms:
+                Number(
+                    document.getElementById(
+                        "bathrooms"
+                    ).value
+                ),
+
+            sqft_living:
+                Number(
+                    document.getElementById(
+                        "sqft_living"
+                    ).value
+                ),
+
+            sqft_lot:
+                Number(
+                    document.getElementById(
+                        "sqft_lot"
+                    ).value
+                ),
+
+            floors:
+                Number(
+                    document.getElementById(
+                        "floors"
+                    ).value
+                ),
+
+            waterfront:
+                Number(
+                    document.getElementById(
+                        "waterfront"
+                    ).value
+                ),
+
+            view:
+                Number(
+                    document.getElementById(
+                        "view"
+                    ).value
+                ),
+
+            condition:
+                Number(
+                    document.getElementById(
+                        "condition"
+                    ).value
+                ),
+
+            sqft_above:
+                Number(
+                    document.getElementById(
+                        "sqft_above"
+                    ).value
+                ),
+
+            sqft_basement:
+                Number(
+                    document.getElementById(
+                        "sqft_basement"
+                    ).value
+                ),
+
+            yr_built:
+                Number(
+                    document.getElementById(
+                        "yr_built"
+                    ).value
+                ),
+
+            yr_renovated:
+                Number(
+                    document.getElementById(
+                        "yr_renovated"
+                    ).value
+                ),
+
+            city:
+                document.getElementById(
+                    "city"
+                ).value,
+
+            country:
+                document.getElementById(
+                    "country"
+                ).value
+        };
+
+
+        try {
+
+
+            // Send data to Flask
+
+            const response =
+                await fetch(
+                    "/predict",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(data)
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (response.ok) {
+
+
+                priceBox.innerText =
+                    "$" +
+                    Number(
+                        result.predicted_price
+                    ).toLocaleString(
+                        "en-US",
+                        {
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+
+                resultBox.style.display =
+                    "block";
+
+
+            } else {
+
+
+                errorBox.innerText =
+                    result.error;
+
+
+                errorBox.style.display =
+                    "block";
+
+            }
+
+
+        } catch (error) {
+
+
+            errorBox.innerText =
+                "Unable to connect to backend.";
+
+
+            errorBox.style.display =
+                "block";
+
+        }
+
+    }
+);
+
+
+</script>
+
+
+</body>
+
+</html>
