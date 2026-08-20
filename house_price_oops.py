@@ -1,0 +1,538 @@
+import pandas as pd
+import numpy as np
+import pickle
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+
+
+class HousePricePrediction:
+
+    def __init__(self, file_name):
+
+        try:
+            self.file_name = file_name
+
+            self.model = LinearRegression()
+
+            self.city_map = {}
+            self.country_map = {}
+            self.feature_columns = []
+
+            self.X_train = None
+            self.X_test = None
+            self.y_train = None
+            self.y_test = None
+
+            print("Constructor created successfully.")
+
+        except Exception as e:
+            print("Error in constructor:", e)
+
+
+    def prepare_data(self):
+
+        try:
+
+            df = pd.read_csv(self.file_name)
+
+            print("\n========================================")
+            print("DATA INFORMATION")
+            print("========================================")
+
+            print("Dataset Shape:", df.shape)
+
+            null_values = df.isnull().sum().sum()
+
+            print("Null Values:", null_values)
+
+            df["date"] = pd.to_datetime(
+                df["date"],
+                format="mixed"
+            )
+
+            df["date_year"] = df["date"].dt.year
+            df["date_month"] = df["date"].dt.month
+            df["date_day"] = df["date"].dt.day
+
+            df.drop(
+                "date",
+                axis=1,
+                inplace=True
+            )
+
+            cities = sorted(
+                df["city"].dropna().unique()
+            )
+
+            self.city_map = {
+                city: number
+                for number, city in enumerate(cities)
+            }
+
+            df["city"] = df["city"].map(
+                self.city_map
+            )
+
+            countries = sorted(
+                df["country"].dropna().unique()
+            )
+
+            self.country_map = {
+                country: number
+                for number, country in enumerate(countries)
+            }
+
+            df["country"] = df["country"].map(
+                self.country_map
+            )
+
+            df.dropna(inplace=True)
+
+            print(
+                "Null Values After Processing:",
+                df.isnull().sum().sum()
+            )
+
+            y = df["price"]
+
+            X = df.drop(
+                "price",
+                axis=1
+            )
+
+            self.feature_columns = X.columns.tolist()
+
+            (
+                self.X_train,
+                self.X_test,
+                self.y_train,
+                self.y_test
+            ) = train_test_split(
+                X,
+                y,
+                test_size=0.20,
+                random_state=42
+            )
+
+            print("DATA SPLIT")
+
+
+            print(
+                "Training Data:",
+                self.X_train.shape
+            )
+
+            print(
+                "Testing Data:",
+                self.X_test.shape
+            )
+
+            print("\nCity Mapping:")
+            print(self.city_map)
+
+            print("\nCountry Mapping:")
+            print(self.country_map)
+
+            return True
+
+        except Exception as e:
+
+            print(
+                "\nError in data preparation:",
+                e
+            )
+
+            return False
+
+
+    def train_model(self):
+
+        try:
+
+
+            print("MODEL TRAINING")
+
+
+            self.model.fit(
+                self.X_train,
+                self.y_train
+            )
+
+            train_prediction = self.model.predict(
+                self.X_train
+            )
+
+            train_mse = np.mean(
+                (
+                    self.y_train.values
+                    - train_prediction
+                ) ** 2
+            )
+
+            train_rmse = np.sqrt(
+                train_mse
+            )
+
+            numerator = np.sum(
+                (
+                    self.y_train.values
+                    - train_prediction
+                ) ** 2
+            )
+
+            denominator = np.sum(
+                (
+                    self.y_train.values
+                    - self.y_train.mean()
+                ) ** 2
+            )
+
+            train_r2 = 1 - (
+                numerator / denominator
+            )
+
+            train_accuracy = np.mean(
+                np.abs(
+                    (
+                        self.y_train.values
+                        - train_prediction
+                    )
+                    / self.y_train.values
+                ) <= 0.10
+            ) * 100
+
+            print("\n========== TRAIN RESULTS ==========")
+
+            print(
+                f"Train Accuracy: {train_accuracy:.2f}%"
+            )
+
+            print(
+                f"Train Loss (MSE): {train_mse:.2f}"
+            )
+
+            print(
+                f"Train RMSE: {train_rmse:.2f}"
+            )
+
+            print(
+                f"Train R2: {train_r2:.4f}"
+            )
+
+            return True
+
+        except Exception as e:
+
+            print(
+                "\nError during training:",
+                e
+            )
+
+            return False
+
+
+    def test_model(self):
+
+        try:
+
+            test_prediction = self.model.predict(
+                self.X_test
+            )
+
+            test_mse = np.mean(
+                (
+                    self.y_test.values
+                    - test_prediction
+                ) ** 2
+            )
+
+            test_rmse = np.sqrt(
+                test_mse
+            )
+
+            numerator = np.sum(
+                (
+                    self.y_test.values
+                    - test_prediction
+                ) ** 2
+            )
+
+            denominator = np.sum(
+                (
+                    self.y_test.values
+                    - self.y_test.mean()
+                ) ** 2
+            )
+
+            test_r2 = 1 - (
+                numerator / denominator
+            )
+
+            test_accuracy = np.mean(
+                np.abs(
+                    (
+                        self.y_test.values
+                        - test_prediction
+                    )
+                    / self.y_test.values
+                ) <= 0.10
+            ) * 100
+
+            print("\n========== TEST RESULTS ==========")
+
+            print(
+                f"Test Accuracy: {test_accuracy:.2f}%"
+            )
+
+            print(
+                f"Test Loss (MSE): {test_mse:.2f}"
+            )
+
+            print(
+                f"Test RMSE: {test_rmse:.2f}"
+            )
+
+            print(
+                f"Test R2: {test_r2:.4f}"
+            )
+
+            return True
+
+        except Exception as e:
+
+            print(
+                "\nError during testing:",
+                e
+            )
+
+            return False
+
+
+    def save_model(self):
+
+        try:
+
+            model_data = {
+                "model": self.model,
+                "city_map": self.city_map,
+                "country_map": self.country_map,
+                "feature_columns": self.feature_columns
+            }
+
+            with open(
+                "house_price_model.pkl",
+                "wb"
+            ) as file:
+
+                pickle.dump(
+                    model_data,
+                    file
+                )
+
+            print("MODEL SAVING")
+
+
+            print("Model saved successfully!")
+            print("File: house_price_model.pkl")
+
+            return True
+
+        except Exception as e:
+
+            print(
+                "\nError while saving model:",
+                e
+            )
+
+            return False
+
+
+    def load_model_and_predict(self):
+
+        try:
+
+
+            print("MODEL LOADING & PREDICTION")
+
+
+            with open(
+                "house_price_model.pkl",
+                "rb"
+            ) as file:
+
+                saved_data = pickle.load(file)
+
+            loaded_model = saved_data["model"]
+
+            loaded_city_map = saved_data[
+                "city_map"
+            ]
+
+            loaded_country_map = saved_data[
+                "country_map"
+            ]
+
+            loaded_features = saved_data[
+                "feature_columns"
+            ]
+
+            print("Model loaded")
+
+            test_point_1 = {
+                "date": "2014-05-02",
+                "bedrooms": 3,
+                "bathrooms": 2.0,
+                "sqft_living": 1800,
+                "sqft_lot": 8000,
+                "floors": 1.0,
+                "waterfront": 0,
+                "view": 0,
+                "condition": 4,
+                "sqft_above": 1800,
+                "sqft_basement": 0,
+                "yr_built": 1970,
+                "yr_renovated": 0,
+                "city": "Seattle",
+                "country": "USA"
+            }
+
+            test_point_2 = {
+                "date": "2014-06-15",
+                "bedrooms": 4,
+                "bathrooms": 2.5,
+                "sqft_living": 2500,
+                "sqft_lot": 9000,
+                "floors": 2.0,
+                "waterfront": 0,
+                "view": 1,
+                "condition": 4,
+                "sqft_above": 2200,
+                "sqft_basement": 300,
+                "yr_built": 1990,
+                "yr_renovated": 0,
+                "city": "Bellevue",
+                "country": "USA"
+            }
+
+            test_points = [
+                test_point_1,
+                test_point_2
+            ]
+
+            for number, point in enumerate(
+                test_points,
+                start=1
+            ):
+
+                point_df = pd.DataFrame(
+                    [point]
+                )
+
+                point_df["date"] = pd.to_datetime(
+                    point_df["date"],
+                    format="mixed"
+                )
+
+                point_df["date_year"] = (
+                    point_df["date"].dt.year
+                )
+
+                point_df["date_month"] = (
+                    point_df["date"].dt.month
+                )
+
+                point_df["date_day"] = (
+                    point_df["date"].dt.day
+                )
+
+                point_df.drop(
+                    "date",
+                    axis=1,
+                    inplace=True
+                )
+
+                point_df["city"] = (
+                    point_df["city"].map(
+                        loaded_city_map
+                    )
+                )
+
+                point_df["country"] = (
+                    point_df["country"].map(
+                        loaded_country_map
+                    )
+                )
+
+                point_df = point_df[
+                    loaded_features
+                ]
+
+                prediction = loaded_model.predict(
+                    point_df
+                )
+
+                print(
+                    f"\nTest Point {number}:"
+                )
+
+                print(
+                    f"Predicted Price: "
+                    f"${prediction[0]:,.2f}"
+                )
+
+            return True
+
+        except Exception as e:
+
+            print(
+                "\nError while loading model or predicting:",
+                e
+            )
+
+            return False
+
+
+def main():
+
+    try:
+
+
+        print("HOUSE PRICE PREDICTION PROJECT")
+
+
+        predictor = HousePricePrediction(
+            "data.csv"
+        )
+
+        data_status = predictor.prepare_data()
+
+        if data_status:
+
+            train_status = predictor.train_model()
+
+            if train_status:
+
+                test_status = predictor.test_model()
+
+                if test_status:
+
+                    save_status = predictor.save_model()
+
+                    if save_status:
+
+                        predictor.load_model_and_predict()
+
+        print("PROJECT COMPLETED")
+
+
+    except Exception as e:
+
+        print(
+            "\nError in main:",
+            e
+        )
+
+
+if __name__ == "__main__":
+    main()
